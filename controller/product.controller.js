@@ -2,11 +2,10 @@ const Product = require("../models/productModel");
 const asyncHandler = require("express-async-handler");
 const slugify = require("slugify");
 const ApiFeatures = require("../utils/apiFeatures");
-const User = require('../models/userModel');
+const User = require("../models/userModel");
 const validateMongoDbId = require("../utils/validatemongodbId");
-const cloudinaryUploadImg = require("../utils/cloudinary");
-const fs = require('fs');
-
+const {cloudinaryUploadImg, cloudinaryDeleteImg} = require("../utils/cloudinary");
+const fs = require("fs");
 
 const createProduct = asyncHandler(async (req, res) => {
   try {
@@ -21,12 +20,12 @@ const createProduct = asyncHandler(async (req, res) => {
 });
 
 const updateProduct = asyncHandler(async (req, res) => {
-    const id = req.params.id;
+  const id = req.params.id;
   try {
     if (req.body.title) {
       req.body.slug = slugify(req.body.title);
     }
-    const result = await Product.findByIdAndUpdate(id, req.body, {new: true});
+    const result = await Product.findByIdAndUpdate(id, req.body, { new: true });
     res.json(result);
   } catch (error) {
     throw new Error(error);
@@ -34,9 +33,9 @@ const updateProduct = asyncHandler(async (req, res) => {
 });
 
 const deleteProduct = asyncHandler(async (req, res) => {
-    try{
+  try {
     const id = req.params.id;
-    const result = await Product.findOneAndDelete(id)
+    const result = await Product.findOneAndDelete(id);
     res.json(result);
   } catch (error) {
     throw new Error(error);
@@ -54,19 +53,19 @@ const getProduct = asyncHandler(async (req, res) => {
 });
 
 const getAllProduct = asyncHandler(async (req, res) => {
-    try {
-        const features = new ApiFeatures(Product.find(), req.query)
-          .filter()
-          .sort()
-          .limitFields()
-          .paginate();
-        let products = await features.query;
-        res.status(200).json({
-          status: "success",
-          length: products.length,
-          data: { products },
-        });
-      } catch (error) {
+  try {
+    const features = new ApiFeatures(Product.find(), req.query)
+      .filter()
+      .sort()
+      .limitFields()
+      .paginate();
+    let products = await features.query;
+    res.status(200).json({
+      status: "success",
+      length: products.length,
+      data: { products },
+    });
+  } catch (error) {
     throw new Error(error);
   }
 });
@@ -101,9 +100,9 @@ const addToWishlist = asyncHandler(async (req, res) => {
   }
 });
 
-const rating = asyncHandler(async(req, res) =>{
+const rating = asyncHandler(async (req, res) => {
   const { _id } = req.user;
-  const {star, prodId, comment } = req.body;
+  const { star, prodId, comment } = req.body;
   try {
     const product = await Product.findById(prodId);
     let alreadyRated = product.ratings.find(
@@ -155,12 +154,11 @@ const rating = asyncHandler(async(req, res) =>{
   } catch (error) {
     throw new Error(error);
   }
-
 });
 
 const uploadImages = asyncHandler(async (req, res) => {
-  const { id } = req.params;
-  validateMongoDbId(id);
+  // const { id } = req.params;
+  // validateMongoDbId(id);
   try {
     const uploader = (path) => cloudinaryUploadImg(path, "images");
     const urls = [];
@@ -172,21 +170,33 @@ const uploadImages = asyncHandler(async (req, res) => {
       urls.push(newpath);
       fs.unlinkSync(path);
     }
-    const findProduct = await Product.findByIdAndUpdate(
-      id,
-      {
-        images: urls.map((file) => {
-          return file;
-        }),
-      },
-      {
-        new: true,
-      }
-    );
-    res.json(findProduct);
+    const images = urls.map((file) =>{
+      return file;
+    })
+    res.json(images);
   } catch (error) {
     throw new Error(error);
   }
 });
 
-module.exports = { createProduct, getProduct, getAllProduct, updateProduct, deleteProduct, addToWishlist, rating , uploadImages};
+const deleteImages = asyncHandler(async (req, res) => {
+  const { id } = req.params;
+  try {
+    const deleted = cloudinaryDeleteImg(id, "images");
+    res.json({ message: "Deleted" });
+  } catch (error) {
+    throw new Error(error);
+  }
+});
+
+module.exports = {
+  createProduct,
+  getProduct,
+  getAllProduct,
+  updateProduct,
+  deleteProduct,
+  addToWishlist,
+  rating,
+  uploadImages,
+  deleteImages,
+};

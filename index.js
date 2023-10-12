@@ -22,6 +22,8 @@ app.use('/api/category', require('./routes/category.route'));
 app.use("/api/blogcategory", require('./routes/blogCat.route'));
 app.use("/api/brand", require('./routes/brand.router'));
 app.use("/api/coupon", require('./routes/coupon.route'));
+app.use("/api/color", require('./routes/color.route'));
+app.use("/api/enquiry", require('./routes/enq.route'));
 
 
 
